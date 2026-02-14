@@ -4,7 +4,7 @@
 
 | 항목 | 내용 |
 |------|------|
-| 문서 버전 | 0.3.0 |
+| 문서 버전 | 0.4.0 |
 | 작성자 | Hoseok, Richbot |
 | 작성일 | 2026-02-14 |
 | 상태 | 🟡 Draft |
@@ -270,17 +270,94 @@
 
 ## 8. 기술 고려사항 (Technical Considerations)
 
-### 8.1 스택 제안
+### 8.1 스택
 
-| 영역 | 기술 | 이유 |
-|------|------|------|
-| Framework | Next.js 14 | App Router, SSR |
-| Styling | Tailwind CSS | 빠른 개발 |
-| State | Zustand | 심플, 가벼움 |
-| Video | video.js or native | 커스텀 컨트롤 |
-| Storage | localStorage | 백엔드 없이 저장 |
+| 영역 | 기술 | 버전 | 이유 |
+|------|------|------|------|
+| Framework | React | 18.2.0 | 가볍고 유연 |
+| Build | Vite | 4.x+ | 빠른 HMR, 간단한 설정 |
+| PWA | vite-plugin-pwa | latest | 오프라인 지원, 홈화면 설치 |
+| Swipe/Carousel | Swiper | 12.0.0 | 쇼츠 UX의 핵심 (vertical pagination) |
+| Animation | Framer Motion | 10.x+ | 인터랙션 디테일 (좋아요 애니메이션 등) |
+| Styling | Tailwind CSS | 3.x | 빠른 개발 |
+| State | Zustand | 4.x | 심플, 가벼움 |
+| Storage | localStorage | - | 백엔드 없이 저장 |
 
-### 8.2 목업 데이터 구조
+### 8.2 Swiper 핵심 설정
+
+```jsx
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Pagination, Mousewheel } from 'swiper/modules';
+
+<Swiper
+  direction="vertical"           // 세로 스와이프
+  slidesPerView={1}              // 한 화면에 하나
+  spaceBetween={0}
+  mousewheel={true}              // 마우스 휠 지원
+  pagination={{ clickable: true }}
+  modules={[Pagination, Mousewheel]}
+  style={{ width: '100%', height: '100vh' }}
+>
+  {words.map(word => (
+    <SwiperSlide key={word.id}>
+      <VideoCard word={word} />
+    </SwiperSlide>
+  ))}
+</Swiper>
+```
+
+### 8.3 PWA 설정
+
+```js
+// vite.config.js
+import { VitePWA } from 'vite-plugin-pwa';
+
+export default {
+  plugins: [
+    VitePWA({
+      registerType: 'autoUpdate',
+      manifest: {
+        name: 'Word Shorts',
+        short_name: 'WordShorts',
+        theme_color: '#0F172A',
+        display: 'standalone',
+        orientation: 'portrait',
+      }
+    })
+  ]
+}
+```
+
+### 8.4 프로젝트 구조
+
+```
+word-shorts-frontend/
+├── public/
+│   └── icons/
+├── src/
+│   ├── components/
+│   │   ├── VideoCard.jsx      # 쇼츠 카드
+│   │   ├── WordOverlay.jsx    # 단어 오버레이
+│   │   ├── ActionButtons.jsx  # 우측 버튼들
+│   │   └── BottomSheet.jsx    # 단어 상세
+│   ├── pages/
+│   │   ├── Home.jsx           # 메인 피드
+│   │   └── Saved.jsx          # 저장 목록
+│   ├── stores/
+│   │   └── useWordStore.js    # Zustand 상태
+│   ├── data/
+│   │   └── mockWords.js       # 목업 데이터
+│   ├── styles/
+│   │   └── globals.css
+│   ├── App.jsx
+│   └── main.jsx
+├── index.html
+├── vite.config.js
+├── tailwind.config.js
+└── package.json
+```
+
+### 8.5 목업 데이터 구조
 
 ```typescript
 interface Word {
@@ -335,6 +412,7 @@ interface Word {
 | 0.1.0 | 2026-02-14 | 초안 작성 | Richbot |
 | 0.2.0 | 2026-02-14 | Google Docs 내용 통합 | Richbot |
 | 0.3.0 | 2026-02-14 | 구글 스타일 PRD로 재구성, Non-Goals 추가 | Richbot |
+| 0.4.0 | 2026-02-14 | 프론트엔드 기술 스택 확정 (React+Vite+Swiper+PWA) | Hoseok, Richbot |
 
 ### B. 참고 자료
 

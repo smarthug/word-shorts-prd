@@ -4,7 +4,7 @@
 
 | 항목 | 내용 |
 |------|------|
-| 문서 버전 | 0.4.0 |
+| 문서 버전 | 0.5.0 |
 | 작성자 | Hoseok, Richbot |
 | 작성일 | 2026-02-14 |
 | 상태 | 🟡 Draft |
@@ -166,6 +166,7 @@
 │  │ serendipity       │  │  ← 단어 (하단 오버레이)
 │  │ 뜻밖의 행운        │  │
 │  │ Lv.7 · 토익빈출    │  │
+│  │ ● ○ ○  (1/3)      │  │  ← 같은 단어 쇼츠 인디케이터
 │  └───────────────────┘  │
 │                         │
 │              ❤️ 234     │  ← 우측 액션 버튼
@@ -173,10 +174,31 @@
 │              🔊         │
 │              📤         │
 └─────────────────────────┘
-     ↑ 스와이프: 다음 영상
 ```
 
-### 6.2 단어 상세 (바텀시트)
+### 6.2 스와이프 네비게이션 (2D)
+
+```
+              ↑ 이전 단어
+              │
+              │
+← 같은 단어 ──┼── 같은 단어 →
+  다른 쇼츠   │   다른 쇼츠
+              │
+              ↓ 다음 단어
+```
+
+| 방향 | 동작 | 예시 |
+|------|------|------|
+| **↑↓ 상하** | 다른 단어로 이동 | serendipity → ephemeral |
+| **←→ 좌우** | 같은 단어의 다른 쇼츠 | serendipity 쇼츠 1 → 쇼츠 2 |
+
+**UX 포인트:**
+- 한 단어당 여러 시나리오/영상 제공 (1:N)
+- 마음에 드는 쇼츠 찾을 때까지 좌우 스와이프
+- 하단에 도트 인디케이터로 현재 위치 표시
+
+### 6.3 단어 상세 (바텀시트)
 
 ```
 ┌─────────────────────────┐
@@ -199,7 +221,7 @@
 └─────────────────────────┘
 ```
 
-### 6.3 저장 목록 (P1)
+### 6.4 저장 목록 (P1)
 
 ```
 ┌─────────────────────────┐
@@ -283,28 +305,46 @@
 | State | Zustand | 4.x | 심플, 가벼움 |
 | Storage | localStorage | - | 백엔드 없이 저장 |
 
-### 8.2 Swiper 핵심 설정
+### 8.2 Swiper 핵심 설정 (Nested - 2D 스와이프)
 
 ```jsx
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination, Mousewheel } from 'swiper/modules';
 
+// 세로(Outer): 단어 간 이동
 <Swiper
-  direction="vertical"           // 세로 스와이프
-  slidesPerView={1}              // 한 화면에 하나
-  spaceBetween={0}
-  mousewheel={true}              // 마우스 휠 지원
-  pagination={{ clickable: true }}
-  modules={[Pagination, Mousewheel]}
+  direction="vertical"
+  slidesPerView={1}
+  mousewheel={true}
+  modules={[Mousewheel]}
   style={{ width: '100%', height: '100vh' }}
 >
   {words.map(word => (
     <SwiperSlide key={word.id}>
-      <VideoCard word={word} />
+      {/* 가로(Inner): 같은 단어의 다른 쇼츠 */}
+      <Swiper
+        direction="horizontal"
+        slidesPerView={1}
+        pagination={{ clickable: true }}
+        modules={[Pagination]}
+        nested={true}  // 중요! nested swiper 활성화
+      >
+        {word.shorts.map(short => (
+          <SwiperSlide key={short.id}>
+            <VideoCard word={word} short={short} />
+          </SwiperSlide>
+        ))}
+      </Swiper>
     </SwiperSlide>
   ))}
 </Swiper>
 ```
+
+**핵심 포인트:**
+- `nested={true}` 필수 (inner swiper에서 터치 이벤트 분리)
+- Outer = vertical (단어 이동)
+- Inner = horizontal (같은 단어 쇼츠 이동)
+- Pagination은 inner에만 (도트 인디케이터)
 
 ### 8.3 PWA 설정
 
@@ -360,6 +400,7 @@ word-shorts-frontend/
 ### 8.5 목업 데이터 구조
 
 ```typescript
+// 단어 (1) : 쇼츠 (N) 관계
 interface Word {
   id: string;
   word: string;
@@ -370,9 +411,32 @@ interface Word {
   category: string;
   toeicFreq: 'high' | 'medium' | 'low';
   example: string;
+  shorts: Short[]; // 한 단어에 여러 쇼츠
+}
+
+interface Short {
+  id: string;
+  wordId: string;
+  scenario: string;       // 시나리오 설명
   videoUrl: string;
   thumbnailUrl: string;
+  likeCount: number;
 }
+```
+
+**네비게이션 구조:**
+```
+words: [
+  {
+    word: "serendipity",
+    shorts: [쇼츠1, 쇼츠2, 쇼츠3]  ← 좌우 스와이프
+  },
+  {
+    word: "ephemeral",              ← 상하 스와이프
+    shorts: [쇼츠1, 쇼츠2]
+  },
+  ...
+]
 ```
 
 ---
@@ -413,6 +477,7 @@ interface Word {
 | 0.2.0 | 2026-02-14 | Google Docs 내용 통합 | Richbot |
 | 0.3.0 | 2026-02-14 | 구글 스타일 PRD로 재구성, Non-Goals 추가 | Richbot |
 | 0.4.0 | 2026-02-14 | 프론트엔드 기술 스택 확정 (React+Vite+Swiper+PWA) | Hoseok, Richbot |
+| 0.5.0 | 2026-02-14 | 2D 스와이프 네비게이션 정의 (상하:단어, 좌우:쇼츠) | Hoseok, Richbot |
 
 ### B. 참고 자료
 

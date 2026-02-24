@@ -7,6 +7,7 @@
 - [PRD - UI/UX](./docs/prd-ui-ux.md) - UI/UX 설계 문서
 - [PRD - Backend](./docs/prd-backend.md) - 백엔드 설계 문서 (예정)
 - [PRD - AI Pipeline](./docs/prd-ai-pipeline.md) - AI 파이프라인 문서 (예정)
+- [Architecture - Storage](./docs/architecture-storage.md) - 스토리지 아키텍처 (KV + R2 + 캐싱)
 
 ## 🎯 프로젝트 개요
 
@@ -23,4 +24,4 @@ Word Shorts는 영단어를 30초 쇼츠 영상으로 학습할 수 있는 서�
 
 ---
 
-*Last Updated: 2026-02-14*
+*Last Updated: 2026-02-24*
